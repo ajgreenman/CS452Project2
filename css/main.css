@@ -1,0 +1,31 @@
+body {
+  background-color: #FCFBD4;
+  font-family: Verdana, sans-serif;
+}
+
+#header {
+  width: 60%;
+  margin: auto;
+  padding: 1%;
+  text-align: center;
+  color: #26304D;
+}
+
+#author {
+  font-style: italic;
+}
+
+#container {
+  height: 100%;
+  width: 60%;
+  margin: auto;
+  padding: 1%;
+  background-color: #BACDFF;
+  border: solid 2px #A9BCFF;
+  border-radius: 10px;
+  box-shadow: 0px 0px 5px #888888;
+}
+
+.error {
+  color: #FF0000;
+}
