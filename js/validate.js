@@ -1,5 +1,6 @@
 $(function() {
   $(".error").hide(); // Hide error messages when page loads for the first time.
+  $(".php_error").show(); // Show any errors that the PHP script generated.
 
   $("#input_file_form").submit(function() {
     var fn; // Create an empty variable to hold the file name.
@@ -10,7 +11,7 @@ $(function() {
     if(!$("#file_name").val()) {
       $("#empty_error").show(); // Show the error message.
     } else {
-      $fn = $("#file_name").val(); // Put the file name into the fn variable.
+      var fn = $("#file_name").val(); // Put the file name into the fn variable.
     }
 
     if(!fn) {
