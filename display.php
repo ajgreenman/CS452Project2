@@ -38,6 +38,7 @@ if(!isset($_GET["file_name"])) {
 
     <div id="status">
       <h3>Status Updates</h3>
+      <p id="line_number">Lines Processed: 0</p>
       <p id="current_line"></p>
       <p id="page_fault_status">Page fault occurred!</p>
       <p id="clear_status">All data cleared!</p>

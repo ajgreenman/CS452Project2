@@ -7,6 +7,7 @@ var process_faults = [];
 var process_space = [];
 
 $(function() {
+  $("#line_number").hide();
   $("#page_fault_status").hide();
   $("#clear_status").hide();
 
@@ -22,7 +23,6 @@ $(function() {
 
   $("#walkthrough").click(function() {
     processLine(file_by_line[current_line]);
-    current_line++;
   });
 
   $("#runthrough").click(function() {
@@ -107,6 +107,10 @@ function processLine(line) {
   $("#current_line").text("Current line: " + line);
   $("#current_line").show();
 
+  current_line++;
+  $("#line_number").text("Lines Processed: " + current_line);
+  $("#line_number").show();
+
   var line_contents = line.split(':'); // Splits the line by the colon.
   var process_number = line_contents[0].substring(1); // Gets the id of the process out of the line.
   var page_reference = line_contents[1]; // Gets the page reference out of the line.
@@ -172,6 +176,7 @@ function clearData() {
 
   current_line = 0;
 
+  $("#line_number").hide();
   $("#current_line").hide();
   $("#page_fault_status").hide();
   $("#clear_status").show();
