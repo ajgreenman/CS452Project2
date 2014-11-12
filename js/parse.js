@@ -4,6 +4,7 @@ var num_processes;
 var current_line = 0;
 var page_references = [];
 var process_faults = [];
+var process_space = [];
 
 $(function() {
   $("#page_fault_status").hide();
@@ -17,6 +18,7 @@ $(function() {
   }
 
   createProcessTable(num_processes);
+  createProcessSpace(num_processes);
 
   $("#walkthrough").click(function() {
     processLine(file_by_line[current_line]);
@@ -43,7 +45,7 @@ function getNumProcesses(contents) {
   // Loop through each line.
   $.each(file_by_line, function(index, value) {
     var line_contents = value.split(':'); // Splits the line by the colon.
-    var process_number = line_contents[0][1]; // Gets the id of the process out of the line.
+    var process_number = line_contents[0].substring(1); // Gets the id of the process out of the line.
 
     if(!process_count[process_number]) {
       process_count[process_number] = 0; // If the process hasn't been recorded, add an entry to the array.
@@ -75,6 +77,16 @@ function createProcessTable(count) {
   $(".pcb").hide();
 }
 
+function createProcessSpace(count) {
+  for(var i = 1; i <= count; i++) {
+    process_space[i] = [];
+
+    for(var j = 0; j < 64; j++) {
+      process_space[i][j] = -1;
+    }
+  }
+}
+
 function processClicked(index) {
   // Reset all process tables to original state.
   $(".pcb").hide();
@@ -96,7 +108,7 @@ function processLine(line) {
   $("#current_line").show();
 
   var line_contents = line.split(':'); // Splits the line by the colon.
-  var process_number = line_contents[0][1]; // Gets the id of the process out of the line.
+  var process_number = line_contents[0].substring(1); // Gets the id of the process out of the line.
   var page_reference = line_contents[1]; // Gets the page reference out of the line.
   page_reference = convertToNumber(page_reference); // Converts to an int value.
 
@@ -109,6 +121,8 @@ function processLine(line) {
     $("#page_fault_status").show();
     process_faults[process_number]++;
     $("#num_page_faults_" + process_number).text(process_faults[process_number]); // Display the number of page faults.
+  } else {
+    $("#page_fault_status").hide();
   }
 }
 
@@ -117,16 +131,31 @@ function runToCompletion(file) {
 
   for(var i = 0; i < file.length; i++) {
     processLine(file[i]);
-    console.log();
   }
 }
 
 function checkForPageFault(pid, page) {
-  if(page == 0) {
-    return true;
-  } else {
-    return false;
+  var ret_val = true;
+  $.each(process_space[pid], function(index, value) {
+    if(process_space[pid][index] == page) {
+      ret_val = false;
+      return false;
+    }
+  });
+
+  if(!ret_val) {
+    return ret_val;
   }
+
+  $.each(process_space[pid], function(index, value) {
+    if(process_space[pid][index] == -1) {
+      process_space[pid][index] = page;
+      return false;
+    }
+  });
+
+  // Implement logic to do LRU.
+  return ret_val;
 }
 
 function clearData() {
@@ -138,7 +167,7 @@ function clearData() {
 
   $.each(page_references, function(index) {
     page_references[index] = 0;
-  $("#num_page_references_" + index).text(page_references[index]); // Display the number of page references.
+    $("#num_page_references_" + index).text(page_references[index]); // Display the number of page references.
   });
 
   current_line = 0;
