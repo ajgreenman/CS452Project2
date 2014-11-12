@@ -12,9 +12,9 @@
       <h1>Project 2 - Page Replacement</h1>
       <h2 id="author">Written by Andrew Greenman</h2>
       <div id="buttons">
-        <input type="button" id="walkthrough" class="bigButton" value="Step through program" />
-        <input type="button" id="runthrough" class="bigButton" value="Run to completion" />
-        <input type="button" id="next_button" class="bigButton" value="Next" />
+        <input type="button" id="walkthrough" class="bigButton" value="Step" />
+        <input type="button" id="runthrough" class="bigButton" value="Run" />
+        <input type="button" id="clear_button" class="bigButton" value="Clear" />
       </div>
     </div>
 
@@ -36,19 +36,19 @@ if(!isset($_GET["file_name"])) {
 
 ?>
 
-  <div id="status">
-    <h3>Status Updates</h3>
-    <p id="current_line"></p>
-  </div>
-
-  <div id="process_table">
-    <div id="process_list">
+    <div id="status">
+      <h3>Status Updates</h3>
+      <p id="current_line"></p>
+      <p id="page_fault_status">Page fault occurred!</p>
+      <p id="clear_status">All data cleared!</p>
     </div>
-  </div>
 
-  <div id="address_space">
-    <table
-  </div>
+    <div id="process_table">
+      <div id="process_list">
+      </div>
+    </div>
 
+    <div id="address_space">
+    </div>
   </body>
 </html>

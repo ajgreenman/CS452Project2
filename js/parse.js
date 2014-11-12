@@ -7,6 +7,8 @@ var process_faults = [];
 
 $(function() {
   $("#next_button").hide();
+  $("#page_fault_status").hide();
+  $("#clear_status").hide();
 
   file_contents = $("#file_contents").text();
   num_processes = getNumProcesses(file_contents);
@@ -18,10 +20,6 @@ $(function() {
   createProcessTable(num_processes);
 
   $("#walkthrough").click(function() {
-    $("#next_button").show();
-  });
-
-  $("#next_button").click(function() {
     processLine(file_by_line[current_line]);
     current_line++;
   });
@@ -29,6 +27,10 @@ $(function() {
   $("#runthrough").click(function() {
     runToCompletion(file_by_line);
   })
+
+  $("#clear_button").click(function() {
+    clearData();
+  });
 });
 
 function getNumProcesses(contents) {
@@ -67,8 +69,8 @@ function createProcessTable(count) {
     $("#process_list").append("<input type=\"button\" name=\"process" + i +
      "\" id=\"process" + i + "\" value=\"Process " + i + "\" class=\"smallButton\" onclick=\"processClicked(" + i + ")\" />");
     $("#process_table").append("<div id=\"process_pcb_" + i + "\" class=\"pcb\"><h4>Process " + i + "</h4>" +
-      "<div id=\"process" + i + "blah><p id=\"page_faults_" + i + "\">Page Faults: <span id=\"num_page_faults_\"" +
-      i + "\">0</span></p><p id=\"page_references_" + i + "\">Page References: <span id=\"num_page_references_\"" +
+      "<div id=\"process" + i + "blah><p id=\"page_faults_" + i + "\">Page Faults: <span id=\"num_page_faults_" +
+      i + "\">0</span></p><p id=\"page_references_" + i + "\">Page References: <span id=\"num_page_references_" +
       i + "\">0</span></p></div></div>");
   }
   $(".pcb").hide();
@@ -89,18 +91,60 @@ function convertToNumber(binary) {
 }
 
 function processLine(line) {
+  $("#clear_status").hide();
+  $("#page_fault_status").hide();
   $("#current_line").text("Current line: " + line);
+  $("#current_line").show();
 
   var line_contents = line.split(':'); // Splits the line by the colon.
   var process_number = line_contents[0][1]; // Gets the id of the process out of the line.
   var page_reference = line_contents[1]; // Gets the page reference out of the line.
   page_reference = convertToNumber(page_reference); // Converts to an int value.
+
+  processClicked(process_number); // Show the correct process.
+
+  page_references[process_number]++; // Add a page reference to the correct process.
+  $("#num_page_references_" + process_number).text(page_references[process_number]); // Display the number of page references.
+
+  if(checkForPageFault(process_number, page_reference)) {
+    $("#page_fault_status").show();
+    process_faults[process_number]++;
+    $("#num_page_faults_" + process_number).text(process_faults[process_number]); // Display the number of page faults.
+  }
 }
 
 function runToCompletion(file) {
-  // Clear all data before running this.
+  clearData(); // Clear all data before running this.
 
   for(var i = 0; i < file.length; i++) {
     processLine(file[i]);
+    console.log();
   }
+}
+
+function checkForPageFault(pid, page) {
+  if(page == 0) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function clearData() {
+  $.each(process_faults, function(index) {
+    process_faults[index] = 0;
+    $("#num_page_faults_" + index).text(process_faults[index]); // Display the number of page faults.
+  });
+
+
+  $.each(page_references, function(index) {
+    page_references[index] = 0;
+  $("#num_page_references_" + index).text(page_references[index]); // Display the number of page references.
+  });
+
+  current_line = 0;
+
+  $("#current_line").hide();
+  $("#page_fault_status").hide();
+  $("#clear_status").show();
 }

@@ -43,12 +43,16 @@ body {
   margin-top: 10px;
 }
 
+#clear_button {
+  margin-top: 10px;
+}
+
 .error {
   color: #FF0000;
 }
 
 .bigButton {
-  width: 30%;
+  width: 20%;
   margin-right: 2%;
   margin-left: 2%;
   padding: 1%;
