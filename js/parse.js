@@ -2,7 +2,6 @@ var file_contents;
 var num_processes;
 
 $(function() {
-  console.log(convertToNumber("101011"));
   file_contents = $("#file_contents").text();
   num_processes = getNumProcesses(file_contents);
   createProcessTable(num_processes);
