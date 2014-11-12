@@ -14,6 +14,7 @@
       <div id="buttons">
         <input type="button" id="walkthrough" class="bigButton" value="Step through program" />
         <input type="button" id="runthrough" class="bigButton" value="Run to completion" />
+        <input type="button" id="next_button" class="bigButton" value="Next" />
       </div>
     </div>
 
@@ -35,9 +36,18 @@ if(!isset($_GET["file_name"])) {
 
 ?>
 
+  <div id="status">
+    <h3>Status Updates</h3>
+    <p id="current_line"></p>
+  </div>
+
   <div id="process_table">
     <div id="process_list">
     </div>
+  </div>
+
+  <div id="address_space">
+    <table
   </div>
 
   </body>
