@@ -5,12 +5,16 @@
     <meta charset="utf-8" />
     <link rel="stylesheet" type="text/css" href="css/main.css" />
     <script type="text/javascript" src="js/jquery.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="js/validate.js" charset="utf-8"></script>
+    <script type="text/javascript" src="js/parse.js" charset="utf-8"></script>
   </head>
   <body>
     <div id="header">
       <h1>Project 2 - Page Replacement</h1>
       <h2 id="author">Written by Andrew Greenman</h2>
+      <div id="buttons">
+        <input type="button" id="walkthrough" class="bigButton" value="Step through program" />
+        <input type="button" id="runthrough" class="bigButton" value="Run to completion" />
+      </div>
     </div>
 
 <?php
@@ -20,17 +24,8 @@ if(!isset($_GET["file_name"])) {
 
   echo "<p id=\"header\">An error occured. <a href=\"index.php\">Please try again.</a></p>";
 } else {
-  if($file = file($_GET["file_name"])) {
-    echo "<div id=\"process_table\">";
-
-    // Process file line by line.
-    foreach ($file as $line) {
-      $line = explode(":", $line); // Split file into process and page number.
-
-      page_reference(trim($line[0]), trim($line[1]));
-    }
-
-    echo "</div>";
+  if($file = file_get_contents($_GET["file_name"])) {
+    echo "<div id=\"file_contents\" style=\"display:none\">$file</div>";
   } else {
     // If the passed file was invalid somehow.
 
@@ -38,11 +33,12 @@ if(!isset($_GET["file_name"])) {
   }
 }
 
-function page_reference($process, $page_number) {
-
-}
-
 ?>
+
+  <div id="process_table">
+    <div id="process_list">
+    </div>
+  </div>
 
   </body>
 </html>
