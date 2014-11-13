@@ -6,6 +6,7 @@ var page_references = [];
 var page_faults = [];
 var process_space = [];
 var pagination = 0;
+var lru = [];
 
 $(function() {
   // Set up the buttons and initialize the processes.
@@ -50,24 +51,27 @@ function getNumProcesses(contents) {
   return count;
 }
 
+// Creates all the necessary html for the PCB.
 function createProcessTable(count) {
-  // Creates all the necessary html for the process table.
   for(var i = 1; i <= count; i++) {
     $("#process_list").append("<input type=\"button\" name=\"process" + i +
      "\" id=\"process" + i + "\" value=\"Process " + i + "\" class=\"smallButton\" onclick=\"processClicked(" + i + ")\" />");
     $("#process_table").append("<div id=\"process_pcb_" + i + "\" class=\"pcb\"><h4>Process " + i + "</h4>" +
       "<div id=\"process" + i + "blah><p id=\"page_faults_" + i + "\">Page Faults: <span id=\"num_page_faults_" +
       i + "\">0</span></p><p id=\"page_references_" + i + "\">Page References: <span id=\"num_page_references_" +
-      i + "\">0</span></p></div></div>");
+      i + "\">0</span></p><p id=\"rate_" + i + "\">Fault Rate: 0.00%</p></div></div>");
   }
 
   hidePCB();
 }
 
+// Creates all the necessary html for the process address space.
 function createProcessSpace(count) {
   var my_tables = "";
+  lru[0] = -1;
   for(var i = 1; i <= count; i++) {
     process_space[i] = [];
+    lru[i] = [];
     var page_count = 0;
 
     my_tables += "<div class=\"process_top\"><input type=\"button\" name=\"prev\" id=\"prev_" + i +
@@ -120,6 +124,7 @@ function processLine(line) {
 
   addReference(process_number);
   checkForPageFault(process_number, page_reference);
+  calculateFaultRate(process_number);
 }
 
 function runToCompletion(file) {
@@ -149,15 +154,39 @@ function checkForPageFault(pid, page) {
       process_space[pid][index] = page;
       $("#process" + pid + "_" + index).text(page);
       $("#reference_status").show();
+      lru[pid].push(page);
+      flag = false;
       return false;
     }
   });
+
+  // If flag is true, then the address space is full.
+  // We use LRU to remove the least recently used and replace it with the new page.
+  if(flag) {
+    var toReplace = lru[pid].shift();
+    $.each(process_space[pid], function(index, value) {
+      if(process_space[pid][index] == toReplace) {
+        process_space[pid][index] = page;
+        lru[pid].push(page);
+      }
+    })
+  }
+
 
   $("#page_fault_status").show();
   page_faults[pid]++;
   $("#num_page_faults_" + pid).text(page_faults[pid]); // Display the number of page faults.
 
   // Implement logic to do LRU.
+}
+
+// Calculates the fault rate for a particular process.
+function calculateFaultRate(pid) {
+  var faults = page_faults[pid];
+  var references = page_references[pid];
+  var percentage = faults / references * 100;
+
+  $("#rate_" + pid).text("Fault rate: " + percentage.toFixed(2) + "%");
 }
 
 // Resets everything to the original state.
