@@ -52,5 +52,7 @@ if(!isset($_GET["file_name"])) {
       <p id="victim_status" class="status_message">Victim: </p>
       <p id="clear_status" class="status_message">All data cleared!</p>
     </div>
+    <div id="physical">
+    </div>
   </body>
 </html>

@@ -5,9 +5,11 @@ var current_line = 0;
 var page_references = [];
 var page_faults = [];
 var process_space = [];
+var physical = [];
 var pagination = 0;
-var lru = [];
-var MEMORY = 64;
+var lru_physical = [];
+var PHYSICAL_MEMORY = 16;
+var LOGICAL_ADDRESS_SPACE = 64;
 var victim = -1;
 
 $(function() {
@@ -18,6 +20,7 @@ $(function() {
   // Create the list of processes and their address spaces.
   createProcessTable(num_processes);
   createProcessSpace(num_processes);
+  createPhysicalMemory();
 
   // Hide everything that needs to be hidden.
   hide();
@@ -70,10 +73,8 @@ function createProcessTable(count) {
 // Creates all the necessary html for the process address space.
 function createProcessSpace(count) {
   var my_tables = "";
-  lru[0] = -1;
   for(var i = 1; i <= count; i++) {
     process_space[i] = [];
-    lru[i] = [];
     var page_count = 0;
 
     my_tables += "<div class=\"process_top\"><input type=\"button\" name=\"prev\" id=\"prev_" + i +
@@ -84,7 +85,7 @@ function createProcessSpace(count) {
     my_tables += "<table id=\"process_" + i + "_table\" class=\"process_table\"><tr><th>Address</th><th>Page Number</th></tr>";
     my_tables += "<tbody id=\"pagination_" + i + "_" + page_count + "\" class=\"pagination_page\">";
 
-    for(var j = 0; j < MEMORY; j++) {
+    for(var j = 0; j < LOGICAL_ADDRESS_SPACE; j++) {
       process_space[i][j] = -1;
       my_tables += "<tr><td>" + j + "</td><td id=\"process" + i + "_" + j + "\">-</td></tr>";
       if(j % 8 == 7) {
@@ -97,6 +98,18 @@ function createProcessSpace(count) {
   }
 
   $("#address_space").append(my_tables);
+}
+
+function createPhysicalMemory() {
+  var physical_html = "<h3>Physical Memory</h3>";
+  physical_html += "<table id=\"physical_memory_table\"><tr><th>Address</th><th>Page</th></tr>";
+  for(var i = 0; i < PHYSICAL_MEMORY; i++) {
+    physical[i] = -1;
+    physical_html += "<tr><td>" + i + "</td><td id=\"physical_memory_" + i + "\">-</td></tr>";
+  }
+  physical_html += "</table>";
+
+  $("#physical").append(physical_html);
 }
 
 // Reset all process tables to original state and show the clicked one.
@@ -125,8 +138,11 @@ function processLine(line) {
   processClicked(process_number); // Show the correct process.
 
   addReference(process_number);
-  checkForPageFault(process_number, page_reference);
+  checkPhysicalFault(process_number, page_reference);
   calculateFaultRate(process_number);
+  updateLogicalSpace(process_number, page_reference);
+  updatePhysicalMemory();
+  console.log(lru_physical);
 }
 
 function runToCompletion(file) {
@@ -137,62 +153,84 @@ function runToCompletion(file) {
   }
 }
 
-function checkForPageFault(pid, page) {
+function checkPhysicalFault(pid, page) {
   var flag = true;
-  $.each(process_space[pid], function(index, value) {
-    if(process_space[pid][index] == page) {
+  var pf = false;
+  var victim_flag = false;
+  var entry = "Process  " + pid + ": Page " + page;
+  $.each(physical, function(index, value) {
+    if(physical[index] == entry) {
       flag = false;
       var lru_index = -1;
-      $.each(lru, function(i, v) {
-        if(lru[pid][i] == page) {
+      $.each(lru_physical, function(i, v) {
+        if(lru_physical[i] == entry) {
           lru_index = i;
           return;
         }
       });
 
       // If we find the value in our table, we remove it and push it back on to the end of the array.
-      lru[pid].splice(lru_index, 1);
-      lru[pid].push(page);
-      return false;
+      lru_physical.splice(lru_index, 1);
+      lru_physical.push(entry);
+
+      return;
     }
   });
 
-  if(!flag) {
-    $("#page_fault_status").hide();
-    return;
+  if(flag) {
+    $.each(physical, function(index, value) {
+      if(physical[index] == -1) {
+        physical[index] = entry;
+        lru_physical.push(entry);
+        flag = false;
+        pf = true;
+        return false;
+      }
+    });
   }
 
-  $.each(process_space[pid], function(index, value) {
-    if(process_space[pid][index] == -1) {
-      process_space[pid][index] = page;
-      $("#process" + pid + "_" + index).text(page);
-      $("#reference_status").show();
-      lru[pid].push(page);
-      flag = false;
-      return false;
-    }
-  });
 
-  // If flag is true, then the address space is full.
-  // We use LRU to remove the least recently used and replace it with the new page.
   if(flag) {
-    var toReplace = lru[pid].shift();
+    var toReplace = lru_physical.shift();
     victim = toReplace;
-    $.each(process_space[pid], function(index, value) {
-      if(process_space[pid][index] == toReplace) {
-        console.log("Index: " + index + ", toReplace: " + process_space[pid][index] + ", New: " + page);
-        process_space[pid][index] = page;
-        lru[pid].push(page);
-        $("#process" + pid + "_" + index).text(page);
+    victim_flag = true;
+    $.each(physical, function(index, value) {
+      if(physical[index] == toReplace) {
+        physical[index] = entry;
+        lru_physical.push(entry);
+        pf = true;
         return;
       }
     });
+  }
+
+  if(victim != -1 && victim_flag) {
+    $("#victim_status").text("Victim: " + victim);
     $("#victim_status").show();
   }
 
-  $("#page_fault_status").show();
-  page_faults[pid]++;
-  $("#num_page_faults_" + pid).text(page_faults[pid]); // Display the number of page faults.
+  if(pf) {
+    $("#page_fault_status").show();
+    page_faults[pid]++;
+    $("#num_page_faults_" + pid).text(page_faults[pid]); // Display the number of page faults.
+  }
+}
+
+function updateLogicalSpace(pid, page) {
+  var flag = false;
+
+  index = 0;
+  while(process_space[pid][index] != -1) {
+    if(process_space[pid][index] == page) {
+      flag = true;
+    }
+    index++;
+  }
+
+  if(!flag) {
+    process_space[pid][index] = page;
+    $("#process" + pid + "_" + index).text(page);
+  }
 }
 
 // Calculates the fault rate for a particular process.
@@ -232,16 +270,16 @@ function clearData() {
     }
   });
 
-  console.log(lru);
-  $.each(lru, function(index, value) {
-    lru[index] = [];
-  });
+  lru_physical = [];
 
-  lru[0] = -1;
+  for(var i = 0; i < PHYSICAL_MEMORY; i++) {
+    physical[i] = -1;
+  }
 
   current_line = 0;
 
   hideStatus();
+  updatePhysicalMemory();
 
   $("#clear_status").show();
 }
@@ -265,8 +303,8 @@ function next(index) {
 
   pagination++;
 
-  if(pagination > (MEMORY / 8 - 1)) {
-    pagination = (MEMORY / 8 - 1);
+  if(pagination > (LOGICAL_ADDRESS_SPACE / 8 - 1)) {
+    pagination = (LOGICAL_ADDRESS_SPACE / 8 - 1);
   }
 
   showAddressSpace(index);
@@ -371,4 +409,15 @@ function showAddressSpace(index) {
 function addReference(process_number) {
   page_references[process_number]++;
   $("#num_page_references_" + process_number).text(page_references[process_number]);
+}
+
+// Updates the physical memory table.
+function updatePhysicalMemory() {
+  for(var i = 0; i < PHYSICAL_MEMORY; i++) {
+    if(physical[i] == "-1") {
+      $("#physical_memory_" + i).text("-");
+    } else {
+      $("#physical_memory_" + i).text(physical[i]);
+    }
+  }
 }

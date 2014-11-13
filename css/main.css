@@ -32,11 +32,25 @@ body {
 }
 
 #status {
-  width: 40%;
-  margin: 10px auto;
+  float: left;
+  width: 48%;
+  margin: auto;
   text-align: center;
   background-color: #94FF9B;
   border: solid 2px #000000;
+}
+
+#physical {
+  float: left;
+  width: 48%;
+  margin: 10px;
+  text-align: center;
+  background-color: #94FF9B;
+  border: solid 2px #000000;
+}
+
+#physical table {
+  margin: auto;
 }
 
 #next_button {
