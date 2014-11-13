@@ -45,7 +45,7 @@ if(!isset($_GET["file_name"])) {
     </div>
 
     <div id="status">
-      <h3>Status Updates</h3>
+      <h3 id="status_title">Status Updates</h3>
       <p id="line_number">Lines Processed: 0</p>
       <p id="current_line"></p>
       <p id="page_fault_status" class="status_message">Page fault occurred!</p>

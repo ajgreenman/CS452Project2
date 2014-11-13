@@ -132,3 +132,7 @@ table {
 #status p {
   margin-top: -15px;
 }
+
+#status_title {
+  margin-top: 2px;
+}
