@@ -7,6 +7,8 @@ var page_faults = [];
 var process_space = [];
 var pagination = 0;
 var lru = [];
+var MEMORY = 64;
+var victim = -1;
 
 $(function() {
   // Set up the buttons and initialize the processes.
@@ -82,7 +84,7 @@ function createProcessSpace(count) {
     my_tables += "<table id=\"process_" + i + "_table\" class=\"process_table\"><tr><th>Address</th><th>Page Number</th></tr>";
     my_tables += "<tbody id=\"pagination_" + i + "_" + page_count + "\" class=\"pagination_page\">";
 
-    for(var j = 0; j < 64; j++) {
+    for(var j = 0; j < MEMORY; j++) {
       process_space[i][j] = -1;
       my_tables += "<tr><td>" + j + "</td><td id=\"process" + i + "_" + j + "\">-</td></tr>";
       if(j % 8 == 7) {
@@ -140,6 +142,17 @@ function checkForPageFault(pid, page) {
   $.each(process_space[pid], function(index, value) {
     if(process_space[pid][index] == page) {
       flag = false;
+      var lru_index = -1;
+      $.each(lru, function(i, v) {
+        if(lru[pid][i] == page) {
+          lru_index = i;
+          return;
+        }
+      });
+
+      // If we find the value in our table, we remove it and push it back on to the end of the array.
+      lru[pid].splice(lru_index, 1);
+      lru[pid].push(page);
       return false;
     }
   });
@@ -164,20 +177,22 @@ function checkForPageFault(pid, page) {
   // We use LRU to remove the least recently used and replace it with the new page.
   if(flag) {
     var toReplace = lru[pid].shift();
+    victim = toReplace;
     $.each(process_space[pid], function(index, value) {
       if(process_space[pid][index] == toReplace) {
+        console.log("Index: " + index + ", toReplace: " + process_space[pid][index] + ", New: " + page);
         process_space[pid][index] = page;
         lru[pid].push(page);
+        $("#process" + pid + "_" + index).text(page);
+        return;
       }
-    })
+    });
+    $("#victim_status").show();
   }
-
 
   $("#page_fault_status").show();
   page_faults[pid]++;
   $("#num_page_faults_" + pid).text(page_faults[pid]); // Display the number of page faults.
-
-  // Implement logic to do LRU.
 }
 
 // Calculates the fault rate for a particular process.
@@ -185,6 +200,9 @@ function calculateFaultRate(pid) {
   var faults = page_faults[pid];
   var references = page_references[pid];
   var percentage = faults / references * 100;
+  if(references == 0) {
+    percentage = 0.00;
+  }
 
   $("#rate_" + pid).text("Fault rate: " + percentage.toFixed(2) + "%");
 }
@@ -200,6 +218,7 @@ function clearData() {
   $.each(page_references, function(index, value) {
     page_references[index] = 0;
     $("#num_page_references_" + index).text(page_references[index]); // Display the number of page references.
+    calculateFaultRate(index);
   });
 
   $.each(process_space, function(i, value) {
@@ -209,8 +228,16 @@ function clearData() {
 
     for(var j = 0; j < 64; j++) {
       process_space[i][j] = -1;
+      $("#process" + i + "_" + j).text("-");
     }
   });
+
+  console.log(lru);
+  $.each(lru, function(index, value) {
+    lru[index] = [];
+  });
+
+  lru[0] = -1;
 
   current_line = 0;
 
@@ -238,8 +265,8 @@ function next(index) {
 
   pagination++;
 
-  if(pagination > 7) {
-    pagination = 7;
+  if(pagination > (MEMORY / 8 - 1)) {
+    pagination = (MEMORY / 8 - 1);
   }
 
   showAddressSpace(index);
