@@ -5,11 +5,11 @@ var current_line = 0;
 var page_references = [];
 var process_faults = [];
 var process_space = [];
+var pagination = 0;
 
 $(function() {
   $("#line_number").hide();
-  $("#page_fault_status").hide();
-  $("#clear_status").hide();
+  $(".status_message").hide();
 
   file_contents = $("#file_contents").text();
   num_processes = getNumProcesses(file_contents);
@@ -20,6 +20,11 @@ $(function() {
 
   createProcessTable(num_processes);
   createProcessSpace(num_processes);
+  $(".process_table").hide();
+  $(".process_header").hide();
+  $(".pagination_page").hide();
+  $(".previous_button").hide();
+  $(".next_button").hide();
 
   $("#walkthrough").click(function() {
     processLine(file_by_line[current_line]);
@@ -78,23 +83,52 @@ function createProcessTable(count) {
 }
 
 function createProcessSpace(count) {
+  var my_tables = "";
   for(var i = 1; i <= count; i++) {
     process_space[i] = [];
+    var page_count = 0;
+
+    my_tables += "<div class=\"process_top\"><input type=\"button\" name=\"prev\" id=\"prev_" + i +
+      "\" class=\"previous_button\" value=\"Prev\" onclick=\"prev(" + i + ")\" />";
+    my_tables += "<h3 id=\"process_header_" + i + "\" class=\"process_header\">Process " + i + "</h3>";
+    my_tables += "<input type=\"button\" name=\"next\" id=\"next_" + i +
+      "\" class=\"next_button\" value=\"Next\"  onclick=\"next(" + i + ")\"/></div>";
+    my_tables += "<table id=\"process_" + i + "_table\" class=\"process_table\"><tr><th>Address</th><th>Page Number</th></tr>";
+    my_tables += "<tbody id=\"pagination_" + i + "_" + page_count + "\" class=\"pagination_page\">";
 
     for(var j = 0; j < 64; j++) {
       process_space[i][j] = -1;
+      my_tables += "<tr><td>" + j + "</td><td id=\"process" + i + "_" + j + "\">-</td></tr>";
+      if(j % 8 == 7) {
+        page_count++;
+        my_tables += "</tbody><tbody id=\"pagination_" + i + "_" + page_count + "\" class=\"pagination_page\">";
+      }
     }
+
+    my_tables += "</tbody></table>";
   }
+
+  $("#address_space").append(my_tables);
 }
 
 function processClicked(index) {
   // Reset all process tables to original state.
   $(".pcb").hide();
   $(".smallButton").css('background', '#FFFFFF');
+  $(".process_table").hide();
+  $(".process_header").hide();
+  $(".previous_button").hide();
+  $(".next_button").hide();
 
-  // Show the proper process table.
-  $("#process_pcb_" + index).show();
-  $("#process" + index).css('background', '#94FF9B');
+  showProcessTable(index); // Show the proper process table.
+
+  // Show the proper address table.
+  pagination = 0;
+  $("#process_" + index + "_table").show();
+  $("#process_header_" + index).show();
+  $("#prev_" + index).show();
+  $("#next_" + index).show();
+  $("#pagination_" + index + "_" + pagination).show();
 }
 
 function convertToNumber(binary) {
@@ -102,8 +136,7 @@ function convertToNumber(binary) {
 }
 
 function processLine(line) {
-  $("#clear_status").hide();
-  $("#page_fault_status").hide();
+  $(".status_message").hide();
   $("#current_line").text("Current line: " + line);
   $("#current_line").show();
 
@@ -121,9 +154,12 @@ function processLine(line) {
   page_references[process_number]++; // Add a page reference to the correct process.
   $("#num_page_references_" + process_number).text(page_references[process_number]); // Display the number of page references.
 
+  console.log(process_number + ", " + page_reference);
   if(checkForPageFault(process_number, page_reference)) {
     $("#page_fault_status").show();
+    console.log(process_faults[process_number]);
     process_faults[process_number]++;
+    console.log(process_faults[process_number]);
     $("#num_page_faults_" + process_number).text(process_faults[process_number]); // Display the number of page faults.
   } else {
     $("#page_fault_status").hide();
@@ -154,6 +190,8 @@ function checkForPageFault(pid, page) {
   $.each(process_space[pid], function(index, value) {
     if(process_space[pid][index] == -1) {
       process_space[pid][index] = page;
+      $("#process" + pid + "_" + index).text(page);
+      $("#reference_status").show();
       return false;
     }
   });
@@ -163,15 +201,25 @@ function checkForPageFault(pid, page) {
 }
 
 function clearData() {
-  $.each(process_faults, function(index) {
+  $.each(process_faults, function(index, value) {
     process_faults[index] = 0;
     $("#num_page_faults_" + index).text(process_faults[index]); // Display the number of page faults.
   });
 
 
-  $.each(page_references, function(index) {
+  $.each(page_references, function(index, value) {
     page_references[index] = 0;
     $("#num_page_references_" + index).text(page_references[index]); // Display the number of page references.
+  });
+
+  $.each(process_space, function(i, value) {
+    if(i == 0) {
+      return; // No data in process_space[0].
+    }
+
+    for(var j = 0; j < 64; j++) {
+      process_space[i][j] = -1;
+    }
   });
 
   current_line = 0;
@@ -180,4 +228,56 @@ function clearData() {
   $("#current_line").hide();
   $("#page_fault_status").hide();
   $("#clear_status").show();
+}
+
+function prev(index) {
+  $(".process_table").hide();
+  $(".process_header").hide();
+  $(".pagination_page").hide();
+
+  pagination--;
+  if(pagination < 0) {
+    pagination = 0;
+  }
+
+  $("#process_" + index + "_table").show();
+  $("#process_header_" + index).show();
+  $("#prev_" + index).show();
+  $("#next_" + index).show();
+  $("#pagination_" + index + "_" + pagination).show();
+}
+
+
+function next(index) {
+  $(".process_table").hide();
+  $(".process_header").hide();
+  $(".pagination_page").hide();
+
+  pagination++;
+  if(pagination > 7) {
+    pagination = 7;
+  }
+
+  $("#process_" + index + "_table").show();
+  $("#process_header_" + index).show();
+  $("#prev_" + index).show();
+  $("#next_" + index).show();
+  $("#pagination_" + index + "_" + pagination).show();
+}
+
+function hide() {
+  hideProcessTable();
+}
+
+function hideProcessTable() {
+  $(".process_table").hide();
+}
+
+function show() {
+
+}
+
+function showProcessTable(index) {
+  $("#process_pcb_" + index).show();
+  $("#process" + index).css('background', '#94FF9B');
 }

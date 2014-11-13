@@ -36,20 +36,21 @@ if(!isset($_GET["file_name"])) {
 
 ?>
 
-    <div id="status">
-      <h3>Status Updates</h3>
-      <p id="line_number">Lines Processed: 0</p>
-      <p id="current_line"></p>
-      <p id="page_fault_status">Page fault occurred!</p>
-      <p id="clear_status">All data cleared!</p>
-    </div>
-
     <div id="process_table">
       <div id="process_list">
       </div>
     </div>
 
     <div id="address_space">
+    </div>
+
+    <div id="status">
+      <h3>Status Updates</h3>
+      <p id="line_number">Lines Processed: 0</p>
+      <p id="current_line"></p>
+      <p id="page_fault_status" class="status_message">Page fault occurred!</p>
+      <p id="reference_status" class="status_message">Reference added!</p>
+      <p id="clear_status" class="status_message">All data cleared!</p>
     </div>
   </body>
 </html>
