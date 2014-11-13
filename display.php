@@ -54,5 +54,7 @@ if(!isset($_GET["file_name"])) {
     </div>
     <div id="physical">
     </div>
+    <div id="lru">
+    </div>
   </body>
 </html>

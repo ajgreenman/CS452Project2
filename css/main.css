@@ -64,6 +64,10 @@ body {
 #address_space {
   text-align: center;
 }
+#lru {
+  width: 50%;
+  margin: auto;
+}
 
 .error {
   color: #FF0000;

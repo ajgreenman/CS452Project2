@@ -142,7 +142,7 @@ function processLine(line) {
   calculateFaultRate(process_number);
   updateLogicalSpace(process_number, page_reference);
   updatePhysicalMemory();
-  console.log(lru_physical);
+  updateLRU();
 }
 
 function runToCompletion(file) {
@@ -420,4 +420,13 @@ function updatePhysicalMemory() {
       $("#physical_memory_" + i).text(physical[i]);
     }
   }
+}
+
+function updateLRU() {
+  var lru_text = "<h5>LRU</h5>";
+  $.each(lru_physical, function(index, value) {
+    lru_text += "<p>" + lru_physical[index] + "</p>";
+  });
+
+  $("#lru").html(lru_text);
 }
